@@ -68,22 +68,45 @@ public:
   class Vendor : public Object
   {
   public:
-    inline Vendor(const std::string vendor) : Object(find(vendor)) {};
+    inline Vendor(const std::string vendor) : Object(find(vendor))
+    {
+      fd_dict_getval(dict(), &_vendor_data);
+    }
     static struct dict_object* find(const std::string vendor);
+    inline uint32_t vendor_id() const { return _vendor_data.vendor_id; }
+    inline const struct dict_vendor_data* vendor_data() const { return &_vendor_data; }
+
+  private:
+    struct dict_vendor_data _vendor_data;
   };
 
   class Application : public Object
   {
   public:
-    inline Application(const std::string application) : Object(find(application)) {};
+    inline Application(const std::string application) : Object(find(application))
+    {
+      fd_dict_getval(dict(), &_application_data);
+    }
     static struct dict_object* find(const std::string application);
+    inline uint32_t application_id() const { return _application_data.application_id; }
+    inline const struct dict_application_data* application_data() const { return &_application_data; }
+
+  private:
+    struct dict_application_data _application_data;
   };
 
   class Message : public Object
   {
   public:
-    inline Message(const std::string message) : Object(find(message)) {};
+    inline Message(const std::string message) : Object(find(message))
+    {
+      fd_dict_getval(dict(), &_cmd_data);
+    }
     static struct dict_object* find(const std::string message);
+    inline const struct dict_cmd_data* cmd_data() const { return &_cmd_data; }
+
+  private:
+    struct dict_cmd_data _cmd_data;
   };
 
   class AVP : public Object
@@ -93,12 +116,20 @@ public:
     inline AVP(const std::string vendor, const std::string avp) : Object(find(vendor, avp)) {};
     static struct dict_object* find(const std::string avp);
     static struct dict_object* find(const std::string vendor, const std::string avp);
+
+    inline const struct dict_avp_data* avp_data() const { return &_avp_data; }
+    inline enum dict_avp_basetype base_type() const { return _avp_data.avp_basetype; };
+
+  private:
+    struct dict_avp_data _avp_data;
   };
 
   Dictionary();
   const AVP SESSION_ID;
   const AVP VENDOR_SPECIFIC_APPLICATION_ID;
   const AVP VENDOR_ID;
+  const AVP AUTH_APPLICATION_ID;
+  const AVP ACCT_APPLICATION_ID;
   const AVP AUTH_SESSION_STATE;
   const AVP ORIGIN_REALM;
   const AVP ORIGIN_HOST;
@@ -225,6 +256,9 @@ public:
     return *this;
   }
 
+  bool get_str_from_avp(const Dictionary::AVP& type, std::string& str) const;
+  bool get_i32_from_avp(const Dictionary::AVP& type, int32_t& i32) const;
+
   // Populate this AVP from a JSON object
   AVP& val_json(const rapidjson::Value& contents);
 
@@ -274,10 +308,19 @@ public:
     fd_msg_new_session(_fd_msg, NULL, 0);
     return *this;
   }
-  inline Message& add_vendor_spec_app_id()
+  inline Message& add_auth_app_id(const Dictionary::Vendor& vendor, const Dictionary::Application& app)
   {
     Diameter::AVP vendor_specific_application_id(dict()->VENDOR_SPECIFIC_APPLICATION_ID);
-    vendor_specific_application_id.add(Diameter::AVP(dict()->VENDOR_ID).val_i32(10415));
+    vendor_specific_application_id.add(Diameter::AVP(dict()->VENDOR_ID).val_i32(vendor.vendor_id()));
+    vendor_specific_application_id.add(Diameter::AVP(dict()->AUTH_APPLICATION_ID).val_i32(app.application_id()));
+    add(vendor_specific_application_id);
+    return *this;
+  }
+  inline Message& add_acct_app_id(const Dictionary::Vendor& vendor, const Dictionary::Application& app)
+  {
+    Diameter::AVP vendor_specific_application_id(dict()->VENDOR_SPECIFIC_APPLICATION_ID);
+    vendor_specific_application_id.add(Diameter::AVP(dict()->VENDOR_ID).val_i32(vendor.vendor_id()));
+    vendor_specific_application_id.add(Diameter::AVP(dict()->ACCT_APPLICATION_ID).val_i32(app.application_id()));
     add(vendor_specific_application_id);
     return *this;
   }
@@ -357,9 +400,9 @@ class AVP::iterator
 {
 public:
   inline iterator(const AVP& parent_avp) : _avp(find_first_child(parent_avp.avp())) {memset(&_filter_avp_data, 0, sizeof(_filter_avp_data));}
-  inline iterator(const AVP& parent_avp, const Dictionary::AVP& child_type) : _filter_avp_data(get_avp_data(child_type.dict())), _avp(find_first_child(parent_avp.avp(), _filter_avp_data)) {}
+  inline iterator(const AVP& parent_avp, const Dictionary::AVP& child_type) : _filter_avp_data(*child_type.avp_data()), _avp(find_first_child(parent_avp.avp(), _filter_avp_data)) {}
   inline iterator(const Message& parent_msg) : _avp(find_first_child(parent_msg.fd_msg())) {memset(&_filter_avp_data, 0, sizeof(_filter_avp_data));}
-  inline iterator(const Message& parent_msg, const Dictionary::AVP& child_type) : _filter_avp_data(get_avp_data(child_type.dict())), _avp(find_first_child(parent_msg.fd_msg(), _filter_avp_data)) {}
+  inline iterator(const Message& parent_msg, const Dictionary::AVP& child_type) : _filter_avp_data(*child_type.avp_data()), _avp(find_first_child(parent_msg.fd_msg(), _filter_avp_data)) {}
   inline iterator(struct avp* avp) : _avp(avp) {memset(&_filter_avp_data, 0, sizeof(_filter_avp_data));};
   inline ~iterator() {};
 
@@ -391,12 +434,6 @@ public:
   inline AVP* operator->() {return &_avp;}
 
 private:
-  inline static dict_avp_data get_avp_data(struct dict_object* dict)
-  {
-    struct dict_avp_data avp_data;
-    fd_dict_getval(dict, &avp_data);
-    return avp_data;
-  }
   inline static struct avp* find_first_child(msg_or_avp* parent)
   {
     msg_or_avp* first_child = NULL;
