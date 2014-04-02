@@ -112,8 +112,14 @@ public:
   class AVP : public Object
   {
   public:
-    inline AVP(const std::string avp) : Object(find(avp)) {};
-    inline AVP(const std::string vendor, const std::string avp) : Object(find(vendor, avp)) {};
+    inline AVP(const std::string avp) : Object(find(avp))
+    {
+      fd_dict_getval(dict(), &_avp_data);
+    }
+    inline AVP(const std::string vendor, const std::string avp) : Object(find(vendor, avp))
+    {
+      fd_dict_getval(dict(), &_avp_data);
+    }
     static struct dict_object* find(const std::string avp);
     static struct dict_object* find(const std::string vendor, const std::string avp);
 
