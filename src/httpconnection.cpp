@@ -417,7 +417,7 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
   }
 
-  // Create a UUID to use for SAS correlation and add it to the HTTP message. 
+  // Create a UUID to use for SAS correlation and add it to the HTTP message.
   boost::uuids::uuid uuid = get_random_uuid();
   std::string uuid_str = boost::uuids::to_string(uuid);
   extra_headers = curl_slist_append(extra_headers,
@@ -425,7 +425,7 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
 
   // Now log the marker to SAS. Flag that SAS should not reactivate the trail
   // group as a result of associations on this marker (doing so after the call
-  // ends means it will take a long time to be searchable in SAS). 
+  // ends means it will take a long time to be searchable in SAS).
   SAS::Marker corr_marker(trail, MARKER_ID_VIA_BRANCH_PARAM, 0);
   corr_marker.add_var_param(uuid_str);
   SAS::report_marker(corr_marker, SAS::Marker::Scope::Trace, false);
@@ -518,11 +518,13 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
 
       // Is this an error we should retry? If cURL itself has already
       // retried (e.g., CURLE_COULDNT_CONNECT) then there is no point
-      // in us retrying. But if the remote application has hung
-      // (CURLE_OPERATION_TIMEDOUT) or a previously-up connection has
+      // in us retrying. Ditto if DNS is unresponsive
+      // (CURLE_RESOLV_TIMEDOUT). But if the remote application has hung
+      // (CURLE_OPERATION_TIMEDOUT, CURLE_TCP_TIMEDOUT) or a previously-up connection has
       // failed (CURLE_SEND|RECV_ERROR) then we must retry once
       // ourselves.
       bool non_fatal = ((rc == CURLE_OPERATION_TIMEDOUT) ||
+                        (rc == CURLE_TCP_TIMEDOUT) ||
                         (rc == CURLE_SEND_ERROR) ||
                         (rc == CURLE_RECV_ERROR) ||
                         (error_is_503));
