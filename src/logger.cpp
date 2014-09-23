@@ -56,6 +56,7 @@
 #include <string>
 
 #include "logger.h"
+#include "sascontext.h"
 
 Logger::Logger() :
   _flags(ADD_TIMESTAMPS),
@@ -248,6 +249,9 @@ void Logger::backtrace(const char *data)
   if (_fd != NULL)
   {
     fprintf(_fd, "\n%s", data);
+
+    // Dump the SAS trial (if we have it).
+    fprintf(_fd, "\nSAS trail: %lx\n", SASContext::trail());
 
     // First dump the backtrace ourselves.  This is robust but not very good.
     // In particular, it doesn't include good function names or other threads.
