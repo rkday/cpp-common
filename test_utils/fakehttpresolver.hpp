@@ -74,8 +74,7 @@ public:
   void resolve(const std::string& host,
                int port,
                int max_targets,
-               std::vector<AddrInfo>& targets,
-               SAS::TrailId trail)
+               std::vector<AddrInfo>& targets)
   {
     targets = _targets;
     // Fix up ports.

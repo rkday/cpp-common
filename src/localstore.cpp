@@ -74,8 +74,7 @@ void LocalStore::flush_all()
 Store::Status LocalStore::get_data(const std::string& table,
                                    const std::string& key,
                                    std::string& data,
-                                   uint64_t& cas,
-                                   SAS::TrailId trail)
+                                   uint64_t& cas)
 {
   LOG_DEBUG("get_data table=%s key=%s", table.c_str(), key.c_str());
 
@@ -125,8 +124,7 @@ Store::Status LocalStore::set_data(const std::string& table,
                                    const std::string& key,
                                    const std::string& data,
                                    uint64_t cas,
-                                   int expiry,
-                                   SAS::TrailId trail)
+                                   int expiry)
 {
   LOG_DEBUG("set_data table=%s key=%s CAS=%ld expiry=%d",
             table.c_str(), key.c_str(), cas, expiry);
@@ -183,8 +181,7 @@ Store::Status LocalStore::set_data(const std::string& table,
 }
 
 Store::Status LocalStore::delete_data(const std::string& table,
-                                      const std::string& key,
-                                      SAS::TrailId trail)
+                                      const std::string& key)
 {
   LOG_DEBUG("delete_data table=%s key=%s",
             table.c_str(), key.c_str());

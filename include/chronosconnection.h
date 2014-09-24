@@ -53,32 +53,27 @@ public:
                     HttpResolver* resolver);
   virtual ~ChronosConnection();
 
-  virtual HTTPCode send_delete(const std::string& delete_id,
-                               SAS::TrailId trail);
+  virtual HTTPCode send_delete(const std::string& delete_id);
   virtual HTTPCode send_put(std::string& put_identity,
                             uint32_t timer_interval,
                             uint32_t repeat_for,
                             const std::string& callback_uri,
-                            const std::string& opaque_data,
-                            SAS::TrailId trail);
+                            const std::string& opaque_data);
   virtual HTTPCode send_post(std::string& post_identity,
                              uint32_t timer_interval,
                              uint32_t repeat_for,
                              const std::string& callback_uri,
-                             const std::string& opaque_data,
-                             SAS::TrailId trail);
+                             const std::string& opaque_data);
 
   // Versions without repeat_for (i.e. timers that only fire once)
   virtual HTTPCode send_put(std::string& put_identity,
                             uint32_t timer_interval,
                             const std::string& callback_uri,
-                            const std::string& opaque_data,
-                            SAS::TrailId trail);
+                            const std::string& opaque_data);
   virtual HTTPCode send_post(std::string& post_identity,
                              uint32_t timer_interval,
                              const std::string& callback_uri,
-                             const std::string& opaque_data,
-                             SAS::TrailId trail);
+                             const std::string& opaque_data);
   std::string _callback_host;
 
 private:

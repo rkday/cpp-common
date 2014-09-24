@@ -49,8 +49,7 @@ public:
   virtual void resolve(const std::string& host,
                        int port,
                        int max_targets,
-                       std::vector<AddrInfo>& targets,
-                       SAS::TrailId trail);
+                       std::vector<AddrInfo>& targets);
 
   static const int DEFAULT_PORT = 80;
   static const int TRANSPORT = IPPROTO_TCP;

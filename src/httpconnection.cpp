@@ -45,6 +45,7 @@
 #include "httpconnection.h"
 #include "load_monitor.h"
 #include "random_uuid.h"
+#include "sascontext.h"
 
 /// Total time to wait for a response from the server before giving
 /// up.  This is the value that affects the user experience, so should
@@ -261,29 +262,26 @@ void HttpConnection::reset_curl_handle(CURL* curl)
 }
 
 HTTPCode HttpConnection::send_delete(const std::string& path,
-                                     SAS::TrailId trail,
                                      const std::string& body)
 {
   std::string unused_response;
   std::map<std::string, std::string> unused_headers;
 
-  return send_delete(path, unused_headers, unused_response, trail, body);
+  return send_delete(path, unused_headers, unused_response, body);
 }
 
 HTTPCode HttpConnection::send_delete(const std::string& path,
-                                     SAS::TrailId trail,
                                      const std::string& body,
                                      std::string& response)
 {
   std::map<std::string, std::string> unused_headers;
 
-  return send_delete(path, unused_headers, response, trail, body);
+  return send_delete(path, unused_headers, response, body);
 }
 
 HTTPCode HttpConnection::send_delete(const std::string& path,
                                      std::map<std::string, std::string>& headers,
                                      std::string& response,
-                                     SAS::TrailId trail,
                                      const std::string& body,
                                      const std::string& username)
 {
@@ -294,7 +292,7 @@ HTTPCode HttpConnection::send_delete(const std::string& path,
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist);
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 
-  HTTPCode status = send_request(path, body, response, username, trail, "DELETE", curl);
+  HTTPCode status = send_request(path, body, response, username, "DELETE", curl);
 
   curl_slist_free_all(slist);
 
@@ -303,39 +301,35 @@ HTTPCode HttpConnection::send_delete(const std::string& path,
 
 HTTPCode HttpConnection::send_put(const std::string& path,
                                   const std::string& body,
-                                  SAS::TrailId trail,
                                   const std::string& username)
 {
   std::string unused_response;
   std::map<std::string, std::string> unused_headers;
-  return HttpConnection::send_put(path, unused_headers, unused_response, body, trail, username);
+  return HttpConnection::send_put(path, unused_headers, unused_response, body, username);
 }
 
 HTTPCode HttpConnection::send_put(const std::string& path,
                                   std::string& response,
                                   const std::string& body,
-                                  SAS::TrailId trail,
                                   const std::string& username)
 {
   std::map<std::string, std::string> unused_headers;
-  return HttpConnection::send_put(path, unused_headers, response, body, trail, username);
+  return HttpConnection::send_put(path, unused_headers, response, body, username);
 }
 
 HTTPCode HttpConnection::send_put(const std::string& path,
                                   std::map<std::string, std::string>& headers,
                                   const std::string& body,
-                                  SAS::TrailId trail,
                                   const std::string& username)
 {
   std::string unused_response;
-  return HttpConnection::send_put(path, headers, unused_response, body, trail, username);
+  return HttpConnection::send_put(path, headers, unused_response, body, username);
 }
 
 HTTPCode HttpConnection::send_put(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                                   std::map<std::string, std::string>& headers, //< Map of headers from the response
                                   std::string& response,                       //< Retrieved document
                                   const std::string& body,                     //< Body to send in request
-                                  SAS::TrailId trail,                          //< SAS trail
                                   const std::string& username)                 //< Username to assert (if assertUser was true, else ignored)
 {
   CURL *curl = get_curl_handle();
@@ -347,7 +341,7 @@ HTTPCode HttpConnection::send_put(const std::string& path,                     /
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &HttpConnection::write_headers);
   curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &headers);
 
-  HTTPCode status = send_request(path, body, response, "", trail, "PUT", curl);
+  HTTPCode status = send_request(path, body, response, "", "PUT", curl);
 
   curl_slist_free_all(slist);
 
@@ -357,18 +351,16 @@ HTTPCode HttpConnection::send_put(const std::string& path,                     /
 HTTPCode HttpConnection::send_post(const std::string& path,
                                    std::map<std::string, std::string>& headers,
                                    const std::string& body,
-                                   SAS::TrailId trail,
                                    const std::string& username)
 {
   std::string unused_response;
-  return HttpConnection::send_post(path, headers, unused_response, body, trail, username);
+  return HttpConnection::send_post(path, headers, unused_response, body, username);
 }
 
 HTTPCode HttpConnection::send_post(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                                    std::map<std::string, std::string>& headers, //< Map of headers from the response
                                    std::string& response,                       //< Retrieved document
                                    const std::string& body,                     //< Body to send in request
-                                   SAS::TrailId trail,                          //< SAS trail
                                    const std::string& username)                 //< Username to assert (if assertUser was true, else ignored).
 {
   CURL *curl = get_curl_handle();
@@ -380,7 +372,7 @@ HTTPCode HttpConnection::send_post(const std::string& path,                     
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, &HttpConnection::write_headers);
   curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &headers);
 
-  HTTPCode status = send_request(path, body, response, username, trail, "POST", curl);
+  HTTPCode status = send_request(path, body, response, username, "POST", curl);
 
   curl_slist_free_all(slist);
 
@@ -390,25 +382,23 @@ HTTPCode HttpConnection::send_post(const std::string& path,                     
 /// Get data; return a HTTP return code
 HTTPCode HttpConnection::send_get(const std::string& path,
                                   std::string& response,
-                                  const std::string& username,
-                                  SAS::TrailId trail)
+                                  const std::string& username)
 {
   std::map<std::string, std::string> unused_headers;
-  return HttpConnection::send_get(path, unused_headers, response, username, trail);
+  return HttpConnection::send_get(path, unused_headers, response, username);
 }
 
 /// Get data; return a HTTP return code
 HTTPCode HttpConnection::send_get(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                                   std::map<std::string, std::string>& headers, //< Map of headers from the response
                                   std::string& response,                       //< Retrieved document
-                                  const std::string& username,                 //< Username to assert (if assertUser was true, else ignored)
-                                  SAS::TrailId trail)                          //< SAS trail
+                                  const std::string& username)                 //< Username to assert (if assertUser was true, else ignored)
 {
   CURL *curl = get_curl_handle();
 
   curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
 
-  return send_request(path, "", response, username, trail, "GET", curl);
+  return send_request(path, "", response, username, "GET", curl);
 }
 
 /// Get data; return a HTTP return code
@@ -416,7 +406,6 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
                                       std::string body,              //< Body to send on the request
                                       std::string& doc,              //< OUT: Retrieved document
                                       const std::string& username,   //< Username to assert (if assertUser was true, else ignored).
-                                      SAS::TrailId trail,            //< SAS trail to use
                                       const std::string& method_str, // The method, used for logging.
                                       CURL* curl)
 {
@@ -443,6 +432,7 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
   // Now log the marker to SAS. Flag that SAS should not reactivate the trail
   // group as a result of associations on this marker (doing so after the call
   // ends means it will take a long time to be searchable in SAS).
+  SAS::TrailId trail = SASContext::trail();
   SAS::Marker corr_marker(trail, MARKER_ID_VIA_BRANCH_PARAM, 0);
   corr_marker.add_var_param(uuid_str);
   SAS::report_marker(corr_marker, SAS::Marker::Scope::Trace, false);
@@ -465,7 +455,7 @@ HTTPCode HttpConnection::send_request(const std::string& path,       //< Absolut
 
   // Resolve the host.
   std::vector<AddrInfo> targets;
-  _resolver->resolve(_host, _port, MAX_TARGETS, targets, trail);
+  _resolver->resolve(_host, _port, MAX_TARGETS, targets);
 
   // If we're not recycling the connection, try to get the current connection
   // IP address and add it to the front of the target list.

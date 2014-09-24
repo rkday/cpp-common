@@ -45,6 +45,7 @@
 #include "baseresolver.h"
 #include "sas.h"
 #include "sasevent.h"
+#include "sascontext.h"
 
 BaseResolver::BaseResolver(DnsCachedResolver* dns_client) :
   _naptr_factory(),
@@ -126,14 +127,16 @@ void BaseResolver::srv_resolve(const std::string& srv_name,
                                int transport,
                                int retries,
                                std::vector<AddrInfo>& targets,
-                               int& ttl,
-                               SAS::TrailId trail)
+                               int& ttl)
 {
   // Accumulate blacklisted targets in case they are needed.
   std::vector<AddrInfo> blacklisted_targets;
 
   // Clear the list of targets just in case.
   targets.clear();
+
+  // Get the current SAS trail ID (if any) in case we need to log.
+  SAS::TrailId trail = SASContext::trail();
 
   // Find/load the relevant SRV priority list from the cache.  This increments
   // a reference, so the list cannot be updated until we have finished with
@@ -342,14 +345,16 @@ void BaseResolver::a_resolve(const std::string& hostname,
                              int transport,
                              int retries,
                              std::vector<AddrInfo>& targets,
-                             int& ttl,
-                             SAS::TrailId trail)
+                             int& ttl)
 {
   // Clear the list of targets just in case.
   targets.clear();
 
   // Accumulate blacklisted targets in case they are needed.
   std::vector<AddrInfo> blacklisted_targets;
+
+  // Get the current SAS trail ID (if any) in case we need to log.
+  SAS::TrailId trail = SASContext::trail();
 
   // Do A/AAAA lookup.
   DnsResult result = _dns_client->dns_query(hostname, (af == AF_INET) ? ns_t_a : ns_t_aaaa);

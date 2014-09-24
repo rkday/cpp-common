@@ -60,8 +60,7 @@ HttpResolver::~HttpResolver()
 void HttpResolver::resolve(const std::string& host,
                            int port,
                            int max_targets,
-                           std::vector<AddrInfo>& targets,
-                           SAS::TrailId trail)
+                           std::vector<AddrInfo>& targets)
 {
   AddrInfo ai;
   int dummy_ttl = 0;
@@ -82,6 +81,6 @@ void HttpResolver::resolve(const std::string& host,
   }
   else
   {
-    a_resolve(host, _address_family, port, TRANSPORT, max_targets, targets, dummy_ttl, trail);
+    a_resolve(host, _address_family, port, TRANSPORT, max_targets, targets, dummy_ttl);
   }
 }

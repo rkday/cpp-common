@@ -55,6 +55,7 @@
 #include "updater.h"
 #include "memcachedstoreview.h"
 #include "memcachedstore.h"
+#include "sascontext.h"
 
 
 /// MemcachedStore constructor
@@ -281,8 +282,7 @@ void MemcachedStore::cleanup_connection(void* p)
 Store::Status MemcachedStore::get_data(const std::string& table,
                                        const std::string& key,
                                        std::string& data,
-                                       uint64_t& cas,
-                                       SAS::TrailId trail)
+                                       uint64_t& cas)
 {
   Store::Status status = Store::Status::OK;
 
@@ -294,6 +294,7 @@ Store::Status MemcachedStore::get_data(const std::string& table,
 
   const std::vector<memcached_st*>& replicas = get_replicas(fqkey, Op::READ);
 
+  SAS::TrailId trail = SASContext::trail();
   if (trail != 0)
   {
     SAS::Event start(trail, SASEvent::MEMCACHED_GET_START, 0);
@@ -440,8 +441,7 @@ Store::Status MemcachedStore::set_data(const std::string& table,
                                        const std::string& key,
                                        const std::string& data,
                                        uint64_t cas,
-                                       int expiry,
-                                       SAS::TrailId trail)
+                                       int expiry)
 {
   Store::Status status = Store::Status::OK;
 
@@ -455,6 +455,7 @@ Store::Status MemcachedStore::set_data(const std::string& table,
 
   const std::vector<memcached_st*>& replicas = get_replicas(fqkey, Op::WRITE);
 
+  SAS::TrailId trail = SASContext::trail();
   if (trail != 0)
   {
     SAS::Event start(trail, SASEvent::MEMCACHED_SET_START, 0);
@@ -621,8 +622,7 @@ Store::Status MemcachedStore::set_data(const std::string& table,
 /// Delete the data for the specified namespace and key.  Writes the data
 /// unconditionally, so CAS is not needed.
 Store::Status MemcachedStore::delete_data(const std::string& table,
-                                          const std::string& key,
-                                          SAS::TrailId trail)
+                                          const std::string& key)
 {
   Store::Status status = Store::Status::OK;
 
@@ -636,6 +636,7 @@ Store::Status MemcachedStore::delete_data(const std::string& table,
   // Delete from the read replicas - read replicas are a superset of the write replicas
   const std::vector<memcached_st*>& replicas = get_replicas(fqkey, Op::READ);
 
+  SAS::TrailId trail = SASContext::trail();
   if (trail != 0)
   {
     SAS::Event start(trail, SASEvent::MEMCACHED_DELETE, 0);

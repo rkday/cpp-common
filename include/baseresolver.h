@@ -113,8 +113,7 @@ protected:
                    int transport,
                    int retries,
                    std::vector<AddrInfo>& targets,
-                   int& ttl,
-                   SAS::TrailId trail);
+                   int& ttl);
 
   /// Does an A/AAAA record resolution for the specified name, selecting
   /// appropriate targets.
@@ -124,8 +123,7 @@ protected:
                  int transport,
                  int retries,
                  std::vector<AddrInfo>& targets,
-                 int& ttl,
-                 SAS::TrailId trail);
+                 int& ttl);
 
   /// Converts a DNS A or AAAA record to an IP46Address structure.
   IP46Address to_ip46(const DnsRRecord* rr);

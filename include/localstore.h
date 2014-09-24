@@ -53,17 +53,14 @@ public:
   Store::Status get_data(const std::string& table,
                          const std::string& key,
                          std::string& data,
-                         uint64_t& cas,
-                         SAS::TrailId trail = 0);
+                         uint64_t& cas);
   Store::Status set_data(const std::string& table,
                          const std::string& key,
                          const std::string& data,
                          uint64_t cas,
-                         int expiry,
-                         SAS::TrailId trail = 0);
+                         int expiry);
   Store::Status delete_data(const std::string& table,
-                            const std::string& key,
-                            SAS::TrailId trail = 0);
+                            const std::string& key);
 private:
   typedef struct record
   {

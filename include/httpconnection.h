@@ -87,79 +87,60 @@ public:
 
   virtual long send_get(const std::string& path,
                         std::string& response,
-                        const std::string& username,
-                        SAS::TrailId trail);
+                        const std::string& username);
   virtual long send_get(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                         std::map<std::string, std::string>& headers, //< Map of headers from the response
                         std::string& response,                       //< Retrieved document
-                        const std::string& username,                 //< Username to assert (if assertUser was true, else ignored)
-                        SAS::TrailId trail);                         //< SAS trail
+                        const std::string& username);                //< Username to assert (if assertUser was true, else ignored)
 
   virtual long send_delete(const std::string& path,
-                           SAS::TrailId trail,
                            const std::string& body = "");
   virtual long send_delete(const std::string& path,
-                           SAS::TrailId trail,
                            const std::string& body,
                            std::string& response);
   virtual long send_delete(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                            std::map<std::string, std::string>& headers, //< Map of headers from the response
                            std::string& response,                       //< Retrieved document
-                           SAS::TrailId trail,                          //< SAS trail
                            const std::string& body = "",                //< Body to send in request
                            const std::string& username = "");           //< Username to assert (if assertUser was true, else ignored)
 
   virtual long send_put(const std::string& path,
                         const std::string& body,
-                        SAS::TrailId trail,
                         const std::string& username = "");
   virtual long send_put(const std::string& path,
                         std::string& response,
                         const std::string& body,
-                        SAS::TrailId trail,
                         const std::string& username = "");
   virtual long send_put(const std::string& path,
                         std::map<std::string, std::string>& headers,
                         const std::string& body,
-                        SAS::TrailId trail,
                         const std::string& username = "");
   virtual long send_put(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                         std::map<std::string, std::string>& headers, //< Map of headers from the response
                         std::string& response,                       //< Retrieved document
                         const std::string& body,                     //< Body to send in request
-                        SAS::TrailId trail,                          //< SAS trail
                         const std::string& username = "");           //< Username to assert (if assertUser was true, else ignored)
 
   virtual long send_post(const std::string& path,
                          std::map<std::string, std::string>& headers,
                          const std::string& body,
-                         SAS::TrailId trail,
                          const std::string& username = "");
   virtual long send_post(const std::string& path,                     //< Absolute path to request from server - must start with "/"
                          std::map<std::string, std::string>& headers, //< Map of headers from the response
                          std::string& response,                       //< Retrieved document
                          const std::string& body,                     //< Body to send in request
-                         SAS::TrailId trail,                          //< SAS trail
                          const std::string& username = "");           //< Username to assert (if assertUser was true, else ignored)
 
   virtual long send_request(const std::string& path,
                             std::string body,
                             std::string& doc,
                             const std::string& username,
-                            SAS::TrailId trail,
                             const std::string& method_str,
                             CURL* curl);
 
   static size_t string_store(void* ptr, size_t size, size_t nmemb, void* stream);
   static void cleanup_curl(void* curlptr);
   static void cleanup_uuid(void* uuid_gen);
-  void sas_log_http_rsp(SAS::TrailId trail,
-                        CURL* curl,
-                        long http_rc,
-                        const std::string& method_str,
-                        const std::string& url,
-                        const std::string& doc,
-                        uint32_t instance_id=0);
 
 private:
 
@@ -203,6 +184,13 @@ private:
   static int port_from_server(const std::string& server);
 
   boost::uuids::uuid get_random_uuid();
+  void sas_log_http_rsp(SAS::TrailId trail,
+                        CURL* curl,
+                        long http_rc,
+                        const std::string& method_str,
+                        const std::string& url,
+                        const std::string& doc,
+                        uint32_t instance_id=0);
 
   const std::string _server;
   const std::string _host;
