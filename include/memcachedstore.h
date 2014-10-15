@@ -60,7 +60,7 @@ extern "C" {
 class MemcachedStore : public Store
 {
 public:
-  MemcachedStore(bool binary, const std::string& config_file);
+  MemcachedStore(bool binary, const std::string& config_file, int max_connect_latency_ms = 50);
   ~MemcachedStore();
 
   /// Flags that the store should use a new view of the memcached cluster to
@@ -156,6 +156,11 @@ private:
   std::vector<std::vector<int> > _read_replicas;
   std::vector<std::vector<int> > _write_replicas;
 
+  // The maximum number of milliseconds to wait for a memcached
+  // connection (except during startup, when we use a fixed 10ms pause
+  // to avoid blocking).
+  int _max_connect_latency_ms;
+  
   // The maximum expiration delta that memcached expects.  Any expiration
   // value larger than this is assumed to be an absolute rather than relative
   // value.  This matches the REALTIME_MAXDELTA constant defined by memcached.

@@ -64,7 +64,8 @@
 /// @param config_file  File name (including directory path) of the configuration
 ///                     file.
 MemcachedStore::MemcachedStore(bool binary,
-                               const std::string& config_file) :
+                               const std::string& config_file,
+                               int max_connect_latency_ms) :
   _config_file(config_file),
   _updater(NULL),
   _replicas(2),
@@ -73,7 +74,8 @@ MemcachedStore::MemcachedStore(bool binary,
   _view_number(0),
   _servers(),
   _read_replicas(_vbuckets),
-  _write_replicas(_vbuckets)
+  _write_replicas(_vbuckets),
+  _max_connect_latency_ms(max_connect_latency_ms)
 {
   // Create the thread local key for the per thread data.
   pthread_key_create(&_thread_local, MemcachedStore::cleanup_connection);
@@ -186,7 +188,7 @@ const std::vector<memcached_st*>& MemcachedStore::get_replicas(const std::string
       LOG_DEBUG("Set up connection %p to server %s", conn->st[ii], _servers[ii].c_str());
 
       // Switch to a longer connect timeout from here on.
-      memcached_behavior_set(conn->st[ii], MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, 50);
+      memcached_behavior_set(conn->st[ii], MEMCACHED_BEHAVIOR_CONNECT_TIMEOUT, _max_connect_latency_ms);
 
       // Connect to the server.  The address is specified as either <IPv4 address>:<port>
       // or [<IPv6 address>]:<port>.  Look for square brackets to determine whether
