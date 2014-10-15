@@ -331,77 +331,100 @@ bool Store::run(Operation* op, SAS::TrailId trail)
   int attempt_count = 0;
 
   // Get a client to execute the operation.
-  ClientInterface* client = get_client();
-
-  // Call perform() to actually do the business logic of the request.  Catch
-  // exceptions and turn them into return codes and error text.
-  do
+  ClientInterface* client = NULL;
+  try
   {
-    retry = false;
+    client = get_client();
+  }
+  catch(TTransportException te)
+  {
+    LOG_ERROR("Cache caught TTransportException: %s", te.what());
+    rc = CONNECTION_ERROR;
+  }
+  catch(NotFoundException nfe)
+  {
+    LOG_ERROR("Cache caught NotFoundException: %s", nfe.what());
+    rc = NOT_FOUND;
+  }
+  catch(...)
+  {
+    LOG_ERROR("Cache caught unknown exception!");
+    rc = UNKNOWN_ERROR;
+  }
 
-    try
+  if (client != NULL)
+  {
+    // Call perform() to actually do the business logic of the
+    // request. Catch exceptions and turn them into return codes and
+    // error text.
+    do
     {
-      attempt_count++;
-      success = op->perform(client, trail);
-    }
-    catch(TTransportException& te)
-    {
-      cass_result = CONNECTION_ERROR;
-      cass_error_text = (boost::format("Exception: %s [%d]")
-                         % te.what() % te.getType()).str();
+      retry = false;
 
-      // SAS log the connection error.
-      SAS::Event event(trail, SASEvent::CASS_CONNECT_FAIL, 0);
-      event.add_var_param(cass_error_text);
-      SAS::report_event(event);
-
-      // Recycle the connection.
-      release_client(); client = NULL;
-
-      if (attempt_count <= 1)
+      try
       {
-        // Connection error, destroy and recreate the connection, and retry the
-        //  request once
-        LOG_DEBUG("Connection error, retrying");
-        try
+        attempt_count++;
+        success = op->perform(client, trail);
+      }
+      catch(TTransportException& te)
+      {
+        cass_result = CONNECTION_ERROR;
+        cass_error_text = (boost::format("Exception: %s [%d]")
+                           % te.what() % te.getType()).str();
+
+        // SAS log the connection error.
+        SAS::Event event(trail, SASEvent::CASS_CONNECT_FAIL, 0);
+        event.add_var_param(cass_error_text);
+        SAS::report_event(event);
+
+        // Recycle the connection.
+        release_client(); client = NULL;
+
+        if (attempt_count <= 1)
         {
-          client = get_client();
-          retry = true;
-          cass_result = OK;
-        }
-        catch(...)
-        {
-          // If there's any error recreating the connection just catch the
-          // exception, and the connection will be recreated in the next cycle
-          LOG_ERROR("Cache caught unknown exception");
+          // Connection error, destroy and recreate the connection, and retry the
+          //  request once
+          LOG_DEBUG("Connection error, retrying");
+          try
+          {
+            client = get_client();
+            retry = true;
+            cass_result = OK;
+          }
+          catch(...)
+          {
+            // If there's any error recreating the connection just catch the
+            // exception, and the connection will be recreated in the next cycle
+            LOG_ERROR("Cache caught unknown exception");
+          }
         }
       }
+      catch(InvalidRequestException& ire)
+      {
+        cass_result = INVALID_REQUEST;
+        cass_error_text = (boost::format("Exception: %s [%s]")
+                           % ire.what() % ire.why.c_str()).str();
+      }
+      catch(NotFoundException& nfe)
+      {
+        cass_result = NOT_FOUND;
+        cass_error_text = (boost::format("Exception: %s")
+                           % nfe.what()).str();
+      }
+      catch(RowNotFoundException& nre)
+      {
+        cass_result = NOT_FOUND;
+        cass_error_text = (boost::format("Row %s not present in column_family %s")
+                           % nre.key % nre.column_family).str();
+      }
+      catch(...)
+      {
+        cass_result = UNKNOWN_ERROR;
+        cass_error_text = "Unknown error";
+      }
     }
-    catch(InvalidRequestException& ire)
-    {
-      cass_result = INVALID_REQUEST;
-      cass_error_text = (boost::format("Exception: %s [%s]")
-                         % ire.what() % ire.why.c_str()).str();
-    }
-    catch(NotFoundException& nfe)
-    {
-      cass_result = NOT_FOUND;
-      cass_error_text = (boost::format("Exception: %s")
-                         % nfe.what()).str();
-    }
-    catch(RowNotFoundException& nre)
-    {
-      cass_result = NOT_FOUND;
-      cass_error_text = (boost::format("Row %s not present in column_family %s")
-                         % nre.key % nre.column_family).str();
-    }
-    catch(...)
-    {
-      cass_result = UNKNOWN_ERROR;
-      cass_error_text = "Unknown error";
-    }
+    while (retry);
   }
-  while (retry);
 
   if (cass_result != OK)
   {
